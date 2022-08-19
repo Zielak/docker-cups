@@ -8,14 +8,12 @@ on:
 
 env:
   CI_REGISTRY_USER: zielak
-  CI_REGISTRY_IMAGE: cups
+  CI_REGISTRY_IMAGE: zielak/cups
 
 jobs:
-  prepare:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      DOCKER_BUILD_ARGS: ${{ steps.prepare-docker.outputs.DOCKER_BUILD_ARGS }}
+    timeout-minutes: 15
     strategy:
       matrix:
         arch: [amd64, arm32v7, arm64v8]
@@ -30,8 +28,7 @@ jobs:
           username: ${{ env.CI_REGISTRY_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Prepare docker & build args
-        id: prepare-docker
+      - name: Prepare & build args
         run: |
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
           export DOCKER_BUILD_ARGS="--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` --build-arg VCS_REF=$GITHUB_SHA"
@@ -40,17 +37,31 @@ jobs:
       - name: Build
         run: docker build --build-arg ARCH=${{ matrix.arch }} ${{ needs.prepare.outputs.DOCKER_BUILD_ARGS }} -t $CI_REGISTRY_IMAGE:$GITHUB_RUN_ID-${{ matrix.arch }} .
 
-  # build:
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 5
-  #   needs: prepare
-  #   strategy:
-  #     matrix:
-  #       arch: [amd64, arm32v7, arm64v8]
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #       with:
-  #         fetch-depth: 0
+      - name: pull
+        run: docker pull $CI_REGISTRY_IMAGE:${GITHUB_RUN_ID}-${{ matrix.arch }}
+      - name: tag
+        run: docker tag $CI_REGISTRY_IMAGE:${GITHUB_RUN_ID}-${{ matrix.arch }} $CI_REGISTRY_IMAGE:latest-${{ matrix.arch }}
+      - name: push
+        run: docker push $CI_REGISTRY_IMAGE:latest-${{ matrix.arch }}
 
-  #     - name: Build
-  #       run: docker build --build-arg ARCH=${{ matrix.arch }} ${{ needs.prepare.outputs.DOCKER_BUILD_ARGS }} -t $CI_REGISTRY_IMAGE:$GITHUB_RUN_ID-${{ matrix.arch }} .
+  manifest:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ env.CI_REGISTRY_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: create manifest
+        run: docker manifest create ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:${CI_PIPELINE_ID}-amd64 ${CI_REGISTRY_IMAGE}:${CI_PIPELINE_ID}-arm32v7 ${CI_REGISTRY_IMAGE}:${CI_PIPELINE_ID}-arm64v8
+      - name: annotate amd64
+        run: docker manifest annotate --os linux --arch amd64 ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:${CI_PIPELINE_ID}-amd64
+      - name: annotate arm32v7
+        run: docker manifest annotate --os linux --arch arm --variant v7 ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:${CI_PIPELINE_ID}-arm32v7
+      - name: creatannotate arm64v8
+        run: docker manifest annotate --os linux --arch arm64 --variant v8 ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:${CI_PIPELINE_ID}-arm64v8
+      - name: push manifest
+        run: docker manifest push ${CI_REGISTRY_IMAGE}:latest
