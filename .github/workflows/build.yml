@@ -1,10 +1,12 @@
-name: Build
+name: Build & Push
 
 on:
   push:
     branches-ignore:
       - main
   workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 3" # “At 00:00 on Wednesday.”
 
 env:
   CI_REGISTRY_USER: zielak
