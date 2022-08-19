@@ -20,7 +20,7 @@ jobs:
       - name: Prepare docker & build args
         id: prepare-docker
         run: |
-          docker login -u $CI_REGISTRY_USER -p ${{ secrets.DOCKER_TOKEN }}
+          docker login -u $CI_REGISTRY_USER -p "${{ secrets.DOCKER_TOKEN }}"
           docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
           export DOCKER_BUILD_ARGS="--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` --build-arg VCS_REF=$GITHUB_SHA"
           echo "::set-output name=DOCKER_BUILD_ARGS::$DOCKER_BUILD_ARGS"
