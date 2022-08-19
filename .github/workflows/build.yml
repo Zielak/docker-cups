@@ -39,8 +39,8 @@ jobs:
       - name: Build
         run: docker build --build-arg ARCH=${{ matrix.arch }} ${{ needs.prepare.outputs.DOCKER_BUILD_ARGS }} -t $CI_REGISTRY_IMAGE:$GITHUB_RUN_ID-${{ matrix.arch }} .
 
-      - name: pull
-        run: docker pull $CI_REGISTRY_IMAGE:${GITHUB_RUN_ID}-${{ matrix.arch }}
+      # - name: pull
+      #   run: docker pull $CI_REGISTRY_IMAGE:${GITHUB_RUN_ID}-${{ matrix.arch }}
       - name: tag
         run: docker tag $CI_REGISTRY_IMAGE:${GITHUB_RUN_ID}-${{ matrix.arch }} $CI_REGISTRY_IMAGE:latest-${{ matrix.arch }}
       - name: push
