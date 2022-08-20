@@ -58,12 +58,12 @@ jobs:
           password: ${{ secrets.DOCKER_TOKEN }}
 
       - name: create manifest
-        run: docker manifest create ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:${CI_PIPELINE_ID}-amd64 ${CI_REGISTRY_IMAGE}:${CI_PIPELINE_ID}-arm32v7 ${CI_REGISTRY_IMAGE}:${CI_PIPELINE_ID}-arm64v8
+        run: docker manifest create ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:latest-amd64 ${CI_REGISTRY_IMAGE}:latest-arm32v7 ${CI_REGISTRY_IMAGE}:latest-arm64v8
       - name: annotate amd64
-        run: docker manifest annotate --os linux --arch amd64 ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:${CI_PIPELINE_ID}-amd64
+        run: docker manifest annotate --os linux --arch amd64 ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:latest-amd64
       - name: annotate arm32v7
-        run: docker manifest annotate --os linux --arch arm --variant v7 ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:${CI_PIPELINE_ID}-arm32v7
+        run: docker manifest annotate --os linux --arch arm --variant v7 ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:latest-arm32v7
       - name: creatannotate arm64v8
-        run: docker manifest annotate --os linux --arch arm64 --variant v8 ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:${CI_PIPELINE_ID}-arm64v8
+        run: docker manifest annotate --os linux --arch arm64 --variant v8 ${CI_REGISTRY_IMAGE}:latest ${CI_REGISTRY_IMAGE}:latest-arm64v8
       - name: push manifest
         run: docker manifest push ${CI_REGISTRY_IMAGE}:latest

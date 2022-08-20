@@ -1,4 +1,4 @@
-# CUPS Docker Image
+# CUPS Docker Image with USB
 
 ## Architectures
 
